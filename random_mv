@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+
+sub get_random_path {
+    my $path = shift;
+    my @dir_list = ();
+
+    opendir(my $dh, $path ? $path : '/') or return $path;
+    while (readdir $dh) {
+        next if $_ eq '.' || $_ eq '..';
+        my $newpath = "$path/$_";
+        #print "DEBUG: newpath=$newpath\n";
+        push @dir_list, $newpath if -x $newpath && -d $newpath;
+    }
+    closedir($dh);
+    my $dir_list_size = scalar(@dir_list);
+    my $random_idx = int(rand($dir_list_size+1));
+    #print "DEBUG: At [$path]\n\tdir_list_size=$dir_list_size\n\trandom_idx=$random_idx\n";
+    return $path if $dir_list_size == 0 || $random_idx == $dir_list_size;
+    return get_random_path($dir_list[$random_idx]);
+}
+
+sub get_rw_random_path {
+    my $path;
+
+    do {
+        $path = get_random_path;
+    } while (!-r $path || !-w $path || !-x $path);
+    return $path;
+}
+
+my $found_dir = get_rw_random_path;
+
+#print "Diretório encontrado: $found_dir\n";
+
+foreach (@ARGV) {
+    my $fname = substr($_, rindex($_,'/')+1, length($_)-rindex($_,'/')-1);
+    rename($_, "$found_dir/$fname") or die "Failed to move $_: $!\n";
+}
+
