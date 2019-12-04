@@ -1,0 +1,38 @@
+#!/usr/bin/php
+<?php
+
+echo "PHP: Hello World\n";
+$fd = fopen(__FILE__, 'r');
+fseek($fd, __COMPILER_HALT_OFFSET__);
+$proc = proc_open('perl', array(0 => $fd), $pipes);
+if ($proc !== FALSE)
+    proc_close($proc);
+
+__halt_compiler();
+
+print "Perl: Hello World\n";
+open PYTHONFD, '|python';
+print PYTHONFD $_ while (<DATA>);
+close PYTHONFD;
+
+__DATA__
+
+import subprocess
+
+print("Python: Hello World")
+
+proc = subprocess.Popen(["/bin/sh"], stdin=subprocess.PIPE)
+proc.stdin.write("""
+#!/bin/sh
+
+echo "Shell: Hello World"
+node <<__NODEJS__
+
+console.log("NodeJS: Hello World");
+
+__NODEJS__
+
+""")
+proc.stdin.close()
+proc.wait()
+
